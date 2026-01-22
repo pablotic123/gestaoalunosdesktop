@@ -10,7 +10,7 @@ from routes import auth_routes, students_routes, courses_routes, turmas_routes, 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-app = FastAPI(title="SGE - Sistema de Gestão Escolar")
+app = FastAPI(title="SGE - Sistema de Gestão Escolar", redirect_slashes=False)
 
 app.add_middleware(
     CORSMiddleware,
