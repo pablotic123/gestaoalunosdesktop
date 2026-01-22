@@ -1,9 +1,8 @@
 const getBackendUrl = () => {
   if (typeof window !== 'undefined') {
-    const origin = window.location.origin;
-    return origin.replace('http://', 'https://');
+    return 'https://escola-manager-7.preview.emergentagent.com';
   }
-  return process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+  return 'https://escola-manager-7.preview.emergentagent.com';
 };
 
 export const BACKEND_URL = getBackendUrl();
