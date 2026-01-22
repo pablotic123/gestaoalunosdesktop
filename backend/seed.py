@@ -1,3 +1,10 @@
+from dotenv import load_dotenv
+from pathlib import Path
+import os
+
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
+
 from database import db
 from auth import get_password_hash
 from datetime import datetime, timezone
