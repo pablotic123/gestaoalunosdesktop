@@ -11,14 +11,14 @@ class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     
     id: str
-    email: EmailStr
+    email: str
     name: str
     role: UserRole
     active: bool = True
     created_at: datetime
 
 class UserCreate(BaseModel):
-    email: EmailStr
+    email: str
     name: str
     password: str
     role: UserRole = UserRole.PROFESSOR
