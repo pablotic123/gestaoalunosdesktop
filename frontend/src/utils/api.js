@@ -9,6 +9,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  maxRedirects: 0,
 });
 
 api.interceptors.request.use((config) => {
@@ -17,8 +18,8 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
-  if (!config.url.startsWith('https://') && !config.url.startsWith('http://')) {
-    config.url = `${HTTPS_API_URL}${config.url.startsWith('/') ? '' : '/'}${config.url}`;
+  if (config.url && !config.url.endsWith('/')) {
+    config.url = config.url + '/';
   }
   
   console.log('🔍 Request:', config.method?.toUpperCase(), config.url || config.baseURL);
