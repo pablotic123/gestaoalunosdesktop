@@ -24,7 +24,7 @@ class UserCreate(BaseModel):
     role: UserRole = UserRole.PROFESSOR
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class Token(BaseModel):
