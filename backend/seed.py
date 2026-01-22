@@ -16,8 +16,8 @@ async def seed_database():
     
     admin_user = {
         "id": str(uuid.uuid4()),
-        "email": "admin@sge.com",
-        "password": get_password_hash("admin123"),
+        "email": "admin",
+        "password": get_password_hash("#admin123%"),
         "name": "Administrador",
         "role": "admin",
         "active": True,
@@ -26,23 +26,22 @@ async def seed_database():
     
     professor_user = {
         "id": str(uuid.uuid4()),
-        "email": "professor@sge.com",
-        "password": get_password_hash("prof123"),
-        "name": "Professor Silva",
+        "email": "professor",
+        "password": get_password_hash("#professor123%"),
+        "name": "Professor",
         "role": "professor",
         "active": True,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
-    existing_admin = await db.users.find_one({"email": "admin@sge.com"})
-    if not existing_admin:
-        await db.users.insert_one(admin_user)
-        print("✓ Usuário admin criado: admin@sge.com / admin123")
+    await db.users.delete_many({})
+    print("✓ Usuários antigos removidos")
     
-    existing_professor = await db.users.find_one({"email": "professor@sge.com"})
-    if not existing_professor:
-        await db.users.insert_one(professor_user)
-        print("✓ Usuário professor criado: professor@sge.com / prof123")
+    await db.users.insert_one(admin_user)
+    print("✓ Usuário admin criado: admin / #admin123%")
+    
+    await db.users.insert_one(professor_user)
+    print("✓ Usuário professor criado: professor / #professor123%")
     
     courses = [
         {
