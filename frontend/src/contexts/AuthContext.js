@@ -1,10 +1,8 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '@/config';
 
 const AuthContext = createContext(null);
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || window.location.origin;
-const API = `${BACKEND_URL}/api`;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -22,7 +20,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await axios.get(`${API}/auth/me`);
+      const response = await axios.get(`${API_URL}/auth/me`);
       setUser(response.data);
     } catch (error) {
       console.error('Erro ao buscar usuário:', error);
@@ -34,7 +32,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${API}/auth/login`, { email, password });
+      const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       const { access_token, user } = response.data;
       localStorage.setItem('token', access_token);
       setToken(access_token);
