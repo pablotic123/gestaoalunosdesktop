@@ -1,8 +1,9 @@
 import axios from 'axios';
-import { API_URL } from '@/config';
+
+const HTTPS_API_URL = 'https://escola-manager-7.preview.emergentagent.com/api';
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: HTTPS_API_URL,
 });
 
 api.interceptors.request.use((config) => {
@@ -10,15 +11,9 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  
-  if (config.url && config.url.startsWith('http://')) {
-    config.url = config.url.replace('http://', 'https://');
-  }
-  if (config.baseURL && config.baseURL.startsWith('http://')) {
-    config.baseURL = config.baseURL.replace('http://', 'https://');
-  }
-  
   return config;
 });
+
+console.log('📡 API configurada:', HTTPS_API_URL);
 
 export default api;
