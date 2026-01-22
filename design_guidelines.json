@@ -1,0 +1,181 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "SGE - Sistema de Gestão Escolar",
+      "persona": "E1 - The Anti-AI Designer",
+      "tone": "Professional, Trustworthy, Efficient, Human-Centric",
+      "theme_strategy": "Smart Light (Primary) with High-Contrast Dark Mode"
+    },
+    "typography": {
+      "font_family": {
+        "headings": "Manrope, sans-serif",
+        "body": "Inter, sans-serif",
+        "mono": "JetBrains Mono, monospace"
+      },
+      "google_fonts_url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap",
+      "usage": {
+        "h1": "text-4xl md:text-5xl font-bold tracking-tight font-heading text-primary",
+        "h2": "text-3xl font-semibold tracking-tight font-heading text-primary",
+        "h3": "text-2xl font-semibold tracking-tight font-heading text-primary",
+        "body": "text-base font-normal tracking-normal font-body text-muted-foreground",
+        "label": "text-xs font-medium uppercase tracking-wider text-muted-foreground/80"
+      }
+    },
+    "colors": {
+      "palette": {
+        "primary": {
+          "name": "Deep Navy",
+          "hex": "#0F172A",
+          "hsl": "222 47% 11%",
+          "usage": "Main navigation, primary text, strong borders"
+        },
+        "accent": {
+          "name": "Electric Indigo",
+          "hex": "#3B82F6",
+          "hsl": "221 83% 53%",
+          "usage": "Primary buttons, active states, focus rings"
+        },
+        "background": {
+          "name": "Cool Paper",
+          "hex": "#F8FAFC",
+          "hsl": "210 40% 98%",
+          "usage": "Page background"
+        },
+        "surface": {
+          "name": "Pure White",
+          "hex": "#FFFFFF",
+          "hsl": "0 0% 100%",
+          "usage": "Cards, modals, inputs"
+        },
+        "success": {
+          "name": "Emerald",
+          "hex": "#10B981",
+          "hsl": "151 55% 41%",
+          "usage": "Status: Active, Passed"
+        },
+        "warning": {
+          "name": "Amber",
+          "hex": "#F59E0B",
+          "hsl": "38 92% 50%",
+          "usage": "Status: Pending, Warning"
+        },
+        "error": {
+          "name": "Rose",
+          "hex": "#E11D48",
+          "hsl": "343 81% 50%",
+          "usage": "Status: Inactive, Failed, Delete actions"
+        }
+      },
+      "shadcn_variables": {
+        "light": {
+          "--background": "210 40% 98%",
+          "--foreground": "222 47% 11%",
+          "--card": "0 0% 100%",
+          "--card-foreground": "222 47% 11%",
+          "--popover": "0 0% 100%",
+          "--popover-foreground": "222 47% 11%",
+          "--primary": "222 47% 11%",
+          "--primary-foreground": "210 40% 98%",
+          "--secondary": "210 40% 96.1%",
+          "--secondary-foreground": "222 47% 11%",
+          "--muted": "210 40% 96.1%",
+          "--muted-foreground": "215.4 16.3% 46.9%",
+          "--accent": "210 40% 96.1%",
+          "--accent-foreground": "222 47% 11%",
+          "--destructive": "0 84.2% 60.2%",
+          "--destructive-foreground": "210 40% 98%",
+          "--border": "214.3 31.8% 91.4%",
+          "--input": "214.3 31.8% 91.4%",
+          "--ring": "222 47% 11%",
+          "--radius": "0.75rem"
+        },
+        "dark": {
+          "--background": "222 47% 11%",
+          "--foreground": "210 40% 98%",
+          "--card": "217 33% 17%",
+          "--card-foreground": "210 40% 98%",
+          "--popover": "222 47% 11%",
+          "--popover-foreground": "210 40% 98%",
+          "--primary": "210 40% 98%",
+          "--primary-foreground": "222 47% 11%",
+          "--secondary": "217 19% 27%",
+          "--secondary-foreground": "210 40% 98%",
+          "--muted": "217 19% 27%",
+          "--muted-foreground": "215 20.2% 65.1%",
+          "--accent": "217 19% 27%",
+          "--accent-foreground": "210 40% 98%",
+          "--destructive": "0 62.8% 30.6%",
+          "--destructive-foreground": "210 40% 98%",
+          "--border": "217 19% 27%",
+          "--input": "217 19% 27%",
+          "--ring": "212.7 26.8% 83.9%"
+        }
+      }
+    },
+    "layout": {
+      "spacing_scale": "p-1, p-2, p-4, p-6, p-8, p-12, p-16, p-20, p-24, p-32",
+      "container_padding": "px-4 md:px-8 lg:px-12",
+      "dashboard_grid": "grid grid-cols-1 md:grid-cols-12 gap-6",
+      "card_style": "bg-card text-card-foreground rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-all duration-200",
+      "sidebar_style": "bg-primary text-primary-foreground h-screen fixed left-0 top-0 w-64 hidden md:flex flex-col border-r border-border/10"
+    },
+    "components": {
+      "buttons": {
+        "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-lg font-medium transition-colors",
+        "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2 rounded-lg font-medium transition-colors",
+        "ghost": "hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 rounded-lg font-medium transition-colors"
+      },
+      "inputs": {
+        "default": "flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      },
+      "cards": {
+        "metric": "p-6 flex flex-col justify-between space-y-2",
+        "student_photo": "aspect-[3/4] object-cover rounded-lg w-full"
+      }
+    },
+    "assets": {
+      "images": {
+        "login_bg": "https://images.pexels.com/photos/18435276/pexels-photo-18435276.jpeg",
+        "institution_hero": "https://images.pexels.com/photos/34840277/pexels-photo-34840277.jpeg",
+        "student_portraits": [
+          "https://images.pexels.com/photos/8147359/pexels-photo-8147359.jpeg",
+          "https://images.pexels.com/photos/8199136/pexels-photo-8199136.jpeg"
+        ],
+        "teacher_avatars": [
+          "https://images.pexels.com/photos/5212321/pexels-photo-5212321.jpeg",
+          "https://images.pexels.com/photos/8500408/pexels-photo-8500408.jpeg"
+        ]
+      },
+      "icons": "lucide-react"
+    },
+    "motion": {
+      "hover_lift": "hover:-translate-y-1 transition-transform duration-200 ease-out",
+      "fade_in": "animate-in fade-in duration-500",
+      "slide_up": "animate-in slide-in-from-bottom-4 duration-500"
+    }
+  },
+  "instructions_to_main_agent": {
+    "setup": [
+      "Install dependencies: `npm install lucide-react recharts date-fns react-day-picker clsx tailwind-merge`",
+      "Update `tailwind.config.js` with the provided font families and colors.",
+      "Update `index.css` with the provided CSS variables.",
+      "Ensure all interactive elements have `data-testid` attributes."
+    ],
+    "implementation_rules": [
+      "Use `lucide-react` for all icons.",
+      "Use `recharts` for the dashboard charts.",
+      "Implement the 'Bento Grid' layout for the dashboard home.",
+      "Use the 'Card' component for the Student Photo Grid (Mural).",
+      "Ensure the sidebar is collapsible on mobile (Sheet component).",
+      "Use `sonner` for toast notifications.",
+      "Do NOT use gradients for backgrounds; use solid colors or subtle patterns.",
+      "Ensure high contrast for text readability (WCAG AA)."
+    ],
+    "universal_guidelines": [
+      "Don't make generic centered layouts.",
+      "Create depth through layered design elements.",
+      "Use 2-3x more spacing than feels comfortable.",
+      "Every interaction needs micro-animations."
+    ]
+  }
+}
