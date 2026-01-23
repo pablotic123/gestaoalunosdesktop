@@ -8,7 +8,7 @@ import uuid
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-@router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=User, status_code=status.HTTP_201_CREATED)
 async def create_user(user_data: UserCreate, current_user: dict = Depends(get_current_admin_user)):
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
@@ -30,7 +30,7 @@ async def create_user(user_data: UserCreate, current_user: dict = Depends(get_cu
     
     return User(**user_dict)
 
-@router.get("/", response_model=List[User])
+@router.get("", response_model=List[User])
 async def get_users(current_user: dict = Depends(get_current_admin_user)):
     users = await db.users.find({}, {"_id": 0, "password": 0}).to_list(1000)
     

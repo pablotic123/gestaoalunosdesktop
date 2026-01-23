@@ -8,7 +8,7 @@ import uuid
 
 router = APIRouter(prefix="/turmas", tags=["turmas"])
 
-@router.post("/", response_model=Turma, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Turma, status_code=status.HTTP_201_CREATED)
 async def create_turma(turma_data: TurmaCreate, current_user: dict = Depends(get_current_admin_user)):
     course_doc = await db.courses.find_one({"id": turma_data.course_id}, {"_id": 0})
     if not course_doc:
@@ -28,7 +28,7 @@ async def create_turma(turma_data: TurmaCreate, current_user: dict = Depends(get
     turma_dict['created_at'] = datetime.fromisoformat(turma_dict['created_at'])
     return Turma(**turma_dict)
 
-@router.get("/", response_model=List[Turma])
+@router.get("", response_model=List[Turma])
 async def get_turmas(current_user: dict = Depends(get_current_user)):
     turmas = await db.turmas.find({}, {"_id": 0}).to_list(1000)
     

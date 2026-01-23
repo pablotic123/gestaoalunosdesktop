@@ -7,7 +7,7 @@ import uuid
 
 router = APIRouter(prefix="/institution", tags=["institution"])
 
-@router.get("/", response_model=Institution)
+@router.get("", response_model=Institution)
 async def get_institution(current_user: dict = Depends(get_current_user)):
     institution = await db.institution.find_one({}, {"_id": 0})
     
@@ -29,7 +29,7 @@ async def get_institution(current_user: dict = Depends(get_current_user)):
     
     return Institution(**institution)
 
-@router.put("/", response_model=Institution)
+@router.put("", response_model=Institution)
 async def update_institution(
     institution_data: InstitutionUpdate,
     current_user: dict = Depends(get_current_admin_user)
