@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
+from starlette.datastructures import URL
 import os
 import logging
 from pathlib import Path
@@ -14,9 +15,12 @@ load_dotenv(ROOT_DIR / '.env')
 
 class RemoveTrailingSlashMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        if request.url.path != "/" and request.url.path.endswith("/"):
-            url = request.url.replace(path=request.url.path.rstrip("/"))
-            request.scope["path"] = request.url.path.rstrip("/")
+        url_path = request.url.path
+        if url_path != "/" and url_path.endswith("/"):
+            url_path = url_path.rstrip("/")
+            url = request.url.replace(path=url_path)
+            request._url = url
+            request.scope["path"] = url_path
         response = await call_next(request)
         return response
 
