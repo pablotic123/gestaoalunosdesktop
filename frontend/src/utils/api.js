@@ -18,15 +18,10 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
-  if (config.url && !config.url.endsWith('/') && !config.url.includes('?')) {
-    config.url = config.url + '/';
-  }
-  
   console.log('🚀 Fazendo requisição:', {
     method: config.method,
     url: config.url,
-    baseURL: config.baseURL,
-    fullURL: config.baseURL + config.url
+    baseURL: config.baseURL
   });
   
   return config;
