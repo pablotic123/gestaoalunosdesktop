@@ -21,7 +21,7 @@ const CoursesPage = () => {
 
   const fetchCourses = async () => {
     try {
-      const res = await api.get('/courses/');
+      const res = await api.get('/courses');
       setCourses(res.data);
     } catch (error) {
       toast.error('Erro ao carregar cursos');
