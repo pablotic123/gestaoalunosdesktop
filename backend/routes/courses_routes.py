@@ -8,7 +8,7 @@ import uuid
 
 router = APIRouter(prefix="/courses", tags=["courses"])
 
-@router.post("/", response_model=Course, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Course, status_code=status.HTTP_201_CREATED)
 async def create_course(course_data: CourseCreate, current_user: dict = Depends(get_current_admin_user)):
     course_dict = course_data.model_dump()
     course_dict["id"] = str(uuid.uuid4())
@@ -20,7 +20,7 @@ async def create_course(course_data: CourseCreate, current_user: dict = Depends(
     course_dict['created_at'] = datetime.fromisoformat(course_dict['created_at'])
     return Course(**course_dict)
 
-@router.get("/", response_model=List[Course])
+@router.get("", response_model=List[Course])
 async def get_courses(current_user: dict = Depends(get_current_user)):
     courses = await db.courses.find({}, {"_id": 0}).to_list(1000)
     
