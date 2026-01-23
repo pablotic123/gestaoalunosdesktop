@@ -1,9 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/utils/api';
 
 const AuthContext = createContext(null);
-
-const HTTPS_API_URL = 'https://escola-manager-7.preview.emergentagent.com/api';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -12,7 +10,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       fetchCurrentUser();
     } else {
       setLoading(false);
@@ -21,7 +18,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await axios.get(`${HTTPS_API_URL}/auth/me/`);
+      const response = await api.get('/auth/me');
       setUser(response.data);
     } catch (error) {
       console.error('Erro ao buscar usuário:', error);
@@ -33,12 +30,11 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(`${HTTPS_API_URL}/auth/login/`, { email, password });
+      const response = await api.post('/auth/login', { email, password });
       const { access_token, user } = response.data;
       localStorage.setItem('token', access_token);
       setToken(access_token);
       setUser(user);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       return { success: true };
     } catch (error) {
       return {
@@ -52,7 +48,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
-    delete axios.defaults.headers.common['Authorization'];
   };
 
   return (
