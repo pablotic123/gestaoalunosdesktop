@@ -10,9 +10,6 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   maxRedirects: 0,
-  validateStatus: function (status) {
-    return status >= 200 && status < 400;
-  }
 });
 
 api.interceptors.request.use((config) => {
@@ -31,9 +28,37 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  response => response,
+  response => {
+    if (response.status === 307 || response.status === 308) {
+      const redirectUrl = response.headers.location || response.headers.Location;
+      if (redirectUrl && redirectUrl.startsWith('http://')) {
+        const httpsUrl = redirectUrl.replace('http://', 'https://');
+        console.log('⚠️ Redirect HTTP detectado, convertendo para HTTPS:', httpsUrl);
+        return api.request({
+          ...response.config,
+          url: httpsUrl,
+          baseURL: ''
+        });
+      }
+    }
+    return response;
+  },
   error => {
     if (error.response) {
+      if (error.response.status === 307 || error.response.status === 308) {
+        const redirectUrl = error.response.headers.location || error.response.headers.Location;
+        if (redirectUrl) {
+          const httpsUrl = redirectUrl.startsWith('http://') 
+            ? redirectUrl.replace('http://', 'https://') 
+            : redirectUrl;
+          console.log('🔄 Seguindo redirect para:', httpsUrl);
+          return api.request({
+            ...error.config,
+            url: httpsUrl,
+            baseURL: ''
+          });
+        }
+      }
       console.error('❌ API Error:', error.response.status, error.response.data);
     } else if (error.request) {
       console.error('❌ Network Error:', error.message);
