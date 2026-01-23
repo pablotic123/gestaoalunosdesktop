@@ -22,6 +22,13 @@ api.interceptors.request.use((config) => {
     config.url = config.url + '/';
   }
   
+  console.log('🚀 Fazendo requisição:', {
+    method: config.method,
+    url: config.url,
+    baseURL: config.baseURL,
+    fullURL: config.baseURL + config.url
+  });
+  
   return config;
 });
 
