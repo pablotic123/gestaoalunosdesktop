@@ -18,14 +18,26 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
-  if (config.url && !config.url.endsWith('/')) {
+  if (config.url && !config.url.endsWith('/') && !config.url.includes('?')) {
     config.url = config.url + '/';
   }
   
-  console.log('🔍 Request:', config.method?.toUpperCase(), config.url || config.baseURL);
-  
   return config;
 });
+
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response) {
+      console.error('❌ API Error:', error.response.status, error.response.data);
+    } else if (error.request) {
+      console.error('❌ Network Error:', error.message);
+    } else {
+      console.error('❌ Request Error:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
 
 console.log('📡 API configurada:', HTTPS_API_URL);
 
