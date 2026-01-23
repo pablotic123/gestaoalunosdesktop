@@ -9,6 +9,10 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  maxRedirects: 0,
+  validateStatus: function (status) {
+    return status >= 200 && status < 400;
+  }
 });
 
 api.interceptors.request.use((config) => {
