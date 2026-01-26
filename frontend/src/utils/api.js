@@ -1,11 +1,36 @@
 import axios from 'axios';
 
-const HTTPS_API_URL = 'https://easy-desktop-app.preview.emergentagent.com/api';
+// Detectar se está rodando no Electron
+const isElectron = () => {
+  // Verificar se o objeto electronAPI foi exposto pelo preload
+  if (typeof window !== 'undefined' && window.electronAPI?.isElectron) {
+    return true;
+  }
+  // Verificar pelo userAgent (fallback)
+  if (typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron')) {
+    return true;
+  }
+  return false;
+};
 
-axios.defaults.baseURL = HTTPS_API_URL;
+// Definir URL base baseado no ambiente
+const getApiUrl = () => {
+  if (isElectron()) {
+    // No Electron, usar localhost
+    return 'http://localhost:8001/api';
+  }
+  // Na web, usar a URL de produção ou variável de ambiente
+  return process.env.REACT_APP_BACKEND_URL 
+    ? `${process.env.REACT_APP_BACKEND_URL}/api`
+    : 'https://easy-desktop-app.preview.emergentagent.com/api';
+};
+
+const API_URL = getApiUrl();
+
+axios.defaults.baseURL = API_URL;
 
 const api = axios.create({
-  baseURL: HTTPS_API_URL,
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -36,6 +61,7 @@ api.interceptors.response.use(
   }
 );
 
-console.log('📡 API configurada:', HTTPS_API_URL);
+console.log('📡 API configurada:', API_URL);
+console.log('🖥️ Ambiente:', isElectron() ? 'Electron (Desktop)' : 'Web');
 
 export default api;
