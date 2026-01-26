@@ -50,7 +50,7 @@ const PublicRoute = ({ children }) => {
 
 function AppContent() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route
           path="/login"
@@ -79,7 +79,8 @@ function AppContent() {
         </Route>
       </Routes>
       <Toaster position="top-right" />
-    </BrowserRouter>
+      <DesktopStatus />
+    </Router>
   );
 }
 
