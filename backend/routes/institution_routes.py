@@ -15,10 +15,10 @@ async def get_institution(current_user: dict = Depends(get_current_user)):
         default_institution = {
             "id": str(uuid.uuid4()),
             "name": "Minha Instituição",
-            "address": "",
-            "phone": "",
-            "email": "",
-            "logo": "",
+            "address": None,
+            "phone": None,
+            "email": None,
+            "logo": None,
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
         await db.institution.insert_one(default_institution)
