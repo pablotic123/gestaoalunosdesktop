@@ -1,7 +1,12 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "sge-desktop",
+  "version": "1.0.0",
+  "description": "SGE - Sistema de Gestão Escolar Desktop",
+  "author": "SGE Team",
+  "license": "MIT",
   "private": true,
+  "main": "electron/main.js",
+  "homepage": "./",
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
     "@radix-ui/react-accordion": "^1.2.8",
