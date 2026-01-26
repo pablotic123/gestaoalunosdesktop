@@ -1,8 +1,8 @@
 const getBackendUrl = () => {
   if (typeof window !== 'undefined') {
-    return 'https://escola-manager-7.preview.emergentagent.com';
+    return 'https://easy-desktop-app.preview.emergentagent.com';
   }
-  return 'https://escola-manager-7.preview.emergentagent.com';
+  return 'https://easy-desktop-app.preview.emergentagent.com';
 };
 
 export const BACKEND_URL = getBackendUrl();

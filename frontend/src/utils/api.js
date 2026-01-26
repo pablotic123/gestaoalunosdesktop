@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const HTTPS_API_URL = 'https://escola-manager-7.preview.emergentagent.com/api';
+const HTTPS_API_URL = 'https://easy-desktop-app.preview.emergentagent.com/api';
 
 axios.defaults.baseURL = HTTPS_API_URL;
 
