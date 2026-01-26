@@ -63,7 +63,13 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
-    "test": "craco test"
+    "test": "craco test",
+    "electron:dev": "cross-env ELECTRON_DEV=true concurrently \"yarn start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "yarn build && electron-builder --config electron-builder.json",
+    "electron:build:win": "yarn build && electron-builder --config electron-builder.json --win",
+    "electron:build:mac": "yarn build && electron-builder --config electron-builder.json --mac",
+    "electron:build:linux": "yarn build && electron-builder --config electron-builder.json --linux",
+    "postinstall": "electron-builder install-app-deps"
   },
   "browserslist": {
     "production": [
