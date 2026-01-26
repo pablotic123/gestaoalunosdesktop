@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { Toaster } from '@/components/ui/sonner';
 import LoginPage from '@/pages/LoginPage';
@@ -11,7 +11,22 @@ import TurmasPage from '@/pages/TurmasPage';
 import CoursesPage from '@/pages/CoursesPage';
 import InstitutionPage from '@/pages/InstitutionPage';
 import UsersPage from '@/pages/UsersPage';
+import DesktopStatus from '@/components/DesktopStatus';
 import '@/index.css';
+
+// Detectar se está no Electron para usar HashRouter (necessário para file://)
+const isElectron = () => {
+  if (typeof window !== 'undefined' && window.electronAPI?.isElectron) {
+    return true;
+  }
+  if (typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('electron')) {
+    return true;
+  }
+  return false;
+};
+
+// Usar HashRouter no Electron (para funcionar com file://)
+const Router = isElectron() ? HashRouter : BrowserRouter;
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
