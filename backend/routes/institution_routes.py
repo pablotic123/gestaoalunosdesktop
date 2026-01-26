@@ -17,7 +17,7 @@ async def get_institution(current_user: dict = Depends(get_current_user)):
             "name": "Minha Instituição",
             "address": None,
             "phone": None,
-            "email": None,
+            "email": "admin@escola.com",  # Default valid email
             "logo": None,
             "updated_at": datetime.now(timezone.utc).isoformat()
         }
