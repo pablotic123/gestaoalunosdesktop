@@ -457,6 +457,7 @@ Para dúvidas, sugestões ou problemas:
 ## 🗺️ Roadmap
 
 ### Versão 2.0 (Planejado)
+- [x] **Aplicativo Desktop com Electron** ✅
 - [ ] Sistema de notas e avaliações
 - [ ] Controle de frequência
 - [ ] Geração de boletins em PDF
@@ -470,12 +471,47 @@ Para dúvidas, sugestões ou problemas:
 
 ---
 
+## 🖥️ Versão Desktop (Electron)
+
+O SGE agora possui uma versão desktop completa utilizando Electron!
+
+### Recursos da Versão Desktop
+- ✅ Aplicativo nativo para Windows, macOS e Linux
+- ✅ Instalador automático para Windows (NSIS)
+- ✅ Splash screen durante inicialização
+- ✅ Indicador de status do servidor
+- ✅ Backend embutido (funciona offline com MongoDB local)
+
+### Como Usar
+
+**Desenvolvimento:**
+```bash
+cd frontend
+yarn electron:dev
+```
+
+**Gerar Instalador Windows:**
+```bash
+cd frontend
+yarn electron:build:win
+```
+
+**Pré-requisitos:**
+- MongoDB instalado e rodando localmente
+- Python 3.11+ (para o backend)
+- Node.js 18+ (para o frontend)
+
+> 📖 Consulte o arquivo [DESKTOP_README.md](DESKTOP_README.md) para instruções detalhadas.
+
+---
+
 ## 👏 Agradecimentos
 
 - [FastAPI](https://fastapi.tiangolo.com/) pela excelente documentação
 - [React](https://react.dev/) pela comunidade ativa
 - [Shadcn/UI](https://ui.shadcn.com/) pelos componentes lindos
 - [DiceBear](https://dicebear.com/) pela API de avatares
+- [Electron](https://www.electronjs.org/) pelo framework desktop
 - Todos os contribuidores do projeto
 
 ---
