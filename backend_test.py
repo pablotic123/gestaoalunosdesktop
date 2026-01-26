@@ -86,7 +86,7 @@ class SGEBackendTester:
             "POST",
             "auth/login",
             200,
-            data={"email": "professor@sge.com", "password": "prof123"}
+            data={"email": "professor", "password": "#professor123%"}
         )
         if success and 'access_token' in response:
             self.professor_token = response['access_token']
