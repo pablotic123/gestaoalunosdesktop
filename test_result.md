@@ -197,6 +197,9 @@ backend:
       - working: true
         agent: "main"
         comment: "API health check funcionando em /api/health"
+      - working: true
+        agent: "testing"
+        comment: "✅ Health Check API confirmed working. GET /api/health returns {\"status\": \"healthy\"} with HTTP 200. Endpoint accessible via production URL."
 
   - task: "Authentication API"
     implemented: true
