@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import api from '@/utils/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Plus, Edit, Trash2 } from 'lucide-react';
+import Pagination from '@/components/Pagination';
 
 const TurmasPage = () => {
   const [turmas, setTurmas] = useState([]);
@@ -15,6 +16,10 @@ const TurmasPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [formData, setFormData] = useState({ name: '', course_id: '', period: '', year: new Date().getFullYear() });
+  
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
     fetchData();
@@ -29,6 +34,14 @@ const TurmasPage = () => {
       toast.error('Erro ao carregar dados');
     }
   };
+
+  // Dados paginados
+  const paginatedTurmas = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return turmas.slice(startIndex, startIndex + itemsPerPage);
+  }, [turmas, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(turmas.length / itemsPerPage);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,10 +73,22 @@ const TurmasPage = () => {
     }
   };
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (items) => {
+    setItemsPerPage(items);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="space-y-6" data-testid="turmas-page">
       <div className="flex justify-between items-center">
-        <h1 className="text-4xl font-heading font-bold text-primary">Turmas</h1>
+        <div>
+          <h1 className="text-4xl font-heading font-bold text-primary">Turmas</h1>
+          <p className="text-muted-foreground mt-2">Gerencie as turmas da instituição</p>
+        </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button data-testid="add-turma-button"><Plus className="h-4 w-4 mr-2" />Nova Turma</Button>
@@ -116,20 +141,42 @@ const TurmasPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {turmas.map(t => (
-                <tr key={t.id} className="hover:bg-accent">
-                  <td className="px-6 py-4 font-medium">{t.name}</td>
-                  <td className="px-6 py-4">{t.course_name}</td>
-                  <td className="px-6 py-4">{t.period}</td>
-                  <td className="px-6 py-4">{t.year}</td>
-                  <td className="px-6 py-4 text-right">
-                    <Button size="sm" variant="ghost" onClick={() => { setEditing(t); setFormData({name: t.name, course_id: t.course_id, period: t.period, year: t.year}); setDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => handleDelete(t.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              {paginatedTurmas.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="px-6 py-12 text-center text-muted-foreground">
+                    Nenhuma turma encontrada
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedTurmas.map(t => (
+                  <tr key={t.id} className="hover:bg-accent">
+                    <td className="px-6 py-4 font-medium">{t.name}</td>
+                    <td className="px-6 py-4">{t.course_name}</td>
+                    <td className="px-6 py-4">{t.period}</td>
+                    <td className="px-6 py-4">{t.year}</td>
+                    <td className="px-6 py-4 text-right">
+                      <Button size="sm" variant="ghost" onClick={() => { setEditing(t); setFormData({name: t.name, course_id: t.course_id, period: t.period, year: t.year}); setDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => handleDelete(t.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+
+          {/* Paginação */}
+          {turmas.length > 0 && (
+            <div className="border-t border-border">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={turmas.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
