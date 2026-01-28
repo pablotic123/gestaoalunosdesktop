@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import api from '@/utils/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,18 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Plus, Search, Edit, Trash2, ImagePlus } from 'lucide-react';
+import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import Pagination from '@/components/Pagination';
 
 const StudentsPage = () => {
   const [students, setStudents] = useState([]);
   const [turmas, setTurmas] = useState([]);
-  const [filteredStudents, setFilteredStudents] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [turmaFilter, setTurmaFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -34,15 +38,15 @@ const StudentsPage = () => {
     fetchTurmas();
   }, []);
 
+  // Reset para página 1 quando filtros mudam
   useEffect(() => {
-    filterStudents();
-  }, [students, searchTerm, statusFilter, turmaFilter]);
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, turmaFilter]);
 
   const fetchStudents = async () => {
     try {
       const response = await api.get('/students');
       setStudents(response.data);
-      setFilteredStudents(response.data);
     } catch (error) {
       toast.error('Erro ao carregar alunos');
     } finally {
@@ -59,7 +63,8 @@ const StudentsPage = () => {
     }
   };
 
-  const filterStudents = () => {
+  // Filtrar alunos
+  const filteredStudents = useMemo(() => {
     let filtered = students;
 
     if (searchTerm) {
@@ -76,8 +81,16 @@ const StudentsPage = () => {
       filtered = filtered.filter(student => student.turma_id === turmaFilter);
     }
 
-    setFilteredStudents(filtered);
-  };
+    return filtered;
+  }, [students, searchTerm, statusFilter, turmaFilter]);
+
+  // Dados paginados
+  const paginatedStudents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredStudents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredStudents, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
 
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
@@ -145,6 +158,15 @@ const StudentsPage = () => {
       photo: ''
     });
     setEditingStudent(null);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (items) => {
+    setItemsPerPage(items);
+    setCurrentPage(1);
   };
 
   if (loading) {
@@ -345,14 +367,14 @@ const StudentsPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filteredStudents.length === 0 ? (
+                {paginatedStudents.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="px-6 py-12 text-center text-muted-foreground">
                       Nenhum aluno encontrado
                     </td>
                   </tr>
                 ) : (
-                  filteredStudents.map((student) => (
+                  paginatedStudents.map((student) => (
                     <tr key={student.id} className="hover:bg-accent" data-testid={`student-row-${student.id}`}>
                       <td className="px-6 py-4">
                         {student.photo ? (
@@ -415,6 +437,20 @@ const StudentsPage = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Paginação */}
+          {filteredStudents.length > 0 && (
+            <div className="border-t border-border">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredStudents.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                onItemsPerPageChange={handleItemsPerPageChange}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
