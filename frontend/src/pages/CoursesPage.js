@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import api from '@/utils/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Plus, Edit, Trash2 } from 'lucide-react';
+import Pagination from '@/components/Pagination';
 
 const CoursesPage = () => {
   const [courses, setCourses] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [formData, setFormData] = useState({ name: '', workload: '', description: '' });
+  
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(9);
 
   useEffect(() => {
     fetchCourses();
@@ -27,6 +32,14 @@ const CoursesPage = () => {
       toast.error('Erro ao carregar cursos');
     }
   };
+
+  // Dados paginados
+  const paginatedCourses = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return courses.slice(startIndex, startIndex + itemsPerPage);
+  }, [courses, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(courses.length / itemsPerPage);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,10 +71,22 @@ const CoursesPage = () => {
     }
   };
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (items) => {
+    setItemsPerPage(items);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="space-y-6" data-testid="courses-page">
       <div className="flex justify-between items-center">
-        <h1 className="text-4xl font-heading font-bold text-primary">Cursos</h1>
+        <div>
+          <h1 className="text-4xl font-heading font-bold text-primary">Cursos</h1>
+          <p className="text-muted-foreground mt-2">Gerencie os cursos da instituição</p>
+        </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button data-testid="add-course-button"><Plus className="h-4 w-4 mr-2" />Novo Curso</Button>
@@ -91,22 +116,45 @@ const CoursesPage = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {courses.map(c => (
-          <Card key={c.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-heading font-semibold text-primary">{c.name}</h3>
-                <div className="flex gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setFormData({name: c.name, workload: c.workload, description: c.description || ''}); setDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-2">{c.workload}h de carga horária</p>
-              {c.description && <p className="text-sm text-muted-foreground">{c.description}</p>}
+        {paginatedCourses.length === 0 ? (
+          <Card className="col-span-full">
+            <CardContent className="p-12 text-center text-muted-foreground">
+              Nenhum curso encontrado
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          paginatedCourses.map(c => (
+            <Card key={c.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-heading font-semibold text-primary">{c.name}</h3>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="ghost" onClick={() => { setEditing(c); setFormData({name: c.name, workload: c.workload, description: c.description || ''}); setDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => handleDelete(c.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-2">{c.workload}h de carga horária</p>
+                {c.description && <p className="text-sm text-muted-foreground">{c.description}</p>}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
+
+      {/* Paginação */}
+      {courses.length > 0 && (
+        <div className="flex justify-center">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={courses.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+            itemsPerPageOptions={[6, 9, 12, 24]}
+          />
+        </div>
+      )}
     </div>
   );
 };
