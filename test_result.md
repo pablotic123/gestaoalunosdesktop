@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Transformar o projeto SGE (Sistema de Gestão Escolar) em um aplicativo Desktop usando Electron, com backend embutido, foco em Windows e instalador automático."
+user_problem_statement: "Transformar o projeto SGE em Desktop com Electron + Adicionar paginação + Exportação PDF na Grade de Fotos + Simplificar instalação com MongoDB"
 
 backend:
   - task: "API Health Check"
