@@ -347,3 +347,39 @@ ipcMain.handle('check-backend-status', async () => {
 ipcMain.handle('check-mongodb-status', async () => {
   return await checkMongoDBConnection();
 });
+
+// Diálogo para salvar arquivo
+ipcMain.handle('show-save-dialog', async (event, options) => {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: options.title || 'Salvar arquivo',
+    defaultPath: options.defaultPath || app.getPath('documents'),
+    filters: options.filters || [
+      { name: 'PDF', extensions: ['pdf'] },
+      { name: 'Todos os arquivos', extensions: ['*'] }
+    ]
+  });
+  
+  return result;
+});
+
+// Salvar arquivo em caminho específico
+ipcMain.handle('save-file', async (event, filePath, data) => {
+  try {
+    // Converter base64 para buffer se necessário
+    let buffer;
+    if (typeof data === 'string' && data.includes('base64')) {
+      const base64Data = data.split(',')[1] || data;
+      buffer = Buffer.from(base64Data, 'base64');
+    } else if (data instanceof ArrayBuffer) {
+      buffer = Buffer.from(data);
+    } else {
+      buffer = Buffer.from(data);
+    }
+    
+    fs.writeFileSync(filePath, buffer);
+    return { success: true, path: filePath };
+  } catch (error) {
+    console.error('Erro ao salvar arquivo:', error);
+    return { success: false, error: error.message };
+  }
+});
