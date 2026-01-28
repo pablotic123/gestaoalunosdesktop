@@ -1,12 +1,17 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '@/utils/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ImageIcon, Users, Download, FileDown, Loader2 } from 'lucide-react';
+import { ImageIcon, Users, Download, FileDown, Loader2, FolderOpen } from 'lucide-react';
 import jsPDF from 'jspdf';
+
+// Detectar se está no Electron
+const isElectron = () => {
+  return typeof window !== 'undefined' && window.electronAPI?.isElectron === true;
+};
 
 const PhotoGridPage = () => {
   const [students, setStudents] = useState([]);
@@ -59,114 +64,157 @@ const PhotoGridPage = () => {
     return acc;
   }, {});
 
-  // Função para converter imagem base64/URL para dados de imagem
-  const loadImage = (src) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = src;
-    });
-  };
+  // Função para gerar o PDF
+  const generatePDF = (turmaData) => {
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 15;
+    const photoSize = 35;
+    const photoGap = 8;
+    const textHeight = 12;
+    const itemHeight = photoSize + textHeight + 5;
+    const cols = Math.floor((pageWidth - 2 * margin) / (photoSize + photoGap));
+    
+    let currentX = margin;
+    let currentY = margin + 20;
+    let col = 0;
 
-  // Função para gerar PDF de uma turma
-  const exportTurmaToPDF = async (turmaId, turmaData) => {
-    setExportingTurma(turmaId);
-    setExporting(true);
+    // Título
+    pdf.setFontSize(20);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(turmaData.name, pageWidth / 2, margin + 5, { align: 'center' });
+    
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(`Total de alunos: ${turmaData.students.length}`, pageWidth / 2, margin + 12, { align: 'center' });
 
-    try {
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 15;
-      const photoSize = 35;
-      const photoGap = 8;
-      const textHeight = 12;
-      const itemHeight = photoSize + textHeight + 5;
-      const cols = Math.floor((pageWidth - 2 * margin) / (photoSize + photoGap));
+    // Data de geração
+    const dataGeracao = new Date().toLocaleDateString('pt-BR');
+    pdf.setFontSize(8);
+    pdf.text(`Gerado em: ${dataGeracao}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+
+    // Processar cada aluno
+    for (let i = 0; i < turmaData.students.length; i++) {
+      const student = turmaData.students[i];
       
-      let currentX = margin;
-      let currentY = margin + 20;
-      let col = 0;
+      // Verificar se precisa de nova página
+      if (currentY + itemHeight > pageHeight - margin) {
+        pdf.addPage();
+        currentY = margin + 10;
+        col = 0;
+        currentX = margin;
+      }
 
-      // Título
-      pdf.setFontSize(20);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(turmaData.name, pageWidth / 2, margin + 5, { align: 'center' });
-      
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Total de alunos: ${turmaData.students.length}`, pageWidth / 2, margin + 12, { align: 'center' });
+      // Desenhar quadro para foto
+      pdf.setDrawColor(200, 200, 200);
+      pdf.setFillColor(245, 245, 245);
+      pdf.roundedRect(currentX, currentY, photoSize, photoSize, 3, 3, 'FD');
 
-      // Data de geração
-      const dataGeracao = new Date().toLocaleDateString('pt-BR');
-      pdf.setFontSize(8);
-      pdf.text(`Gerado em: ${dataGeracao}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
-
-      // Processar cada aluno
-      for (let i = 0; i < turmaData.students.length; i++) {
-        const student = turmaData.students[i];
-        
-        // Verificar se precisa de nova página
-        if (currentY + itemHeight > pageHeight - margin) {
-          pdf.addPage();
-          currentY = margin + 10;
-          col = 0;
-          currentX = margin;
-        }
-
-        // Desenhar quadro para foto
-        pdf.setDrawColor(200, 200, 200);
-        pdf.setFillColor(245, 245, 245);
-        pdf.roundedRect(currentX, currentY, photoSize, photoSize, 3, 3, 'FD');
-
-        // Tentar adicionar foto
-        if (student.photo) {
-          try {
-            // Se for base64, usar diretamente
-            if (student.photo.startsWith('data:image')) {
-              pdf.addImage(student.photo, 'JPEG', currentX + 2, currentY + 2, photoSize - 4, photoSize - 4);
-            }
-          } catch (e) {
-            // Se falhar, mostrar inicial
-            pdf.setFontSize(24);
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(100, 100, 100);
-            pdf.text(student.name.charAt(0).toUpperCase(), currentX + photoSize / 2, currentY + photoSize / 2 + 5, { align: 'center' });
-            pdf.setTextColor(0, 0, 0);
+      // Tentar adicionar foto
+      if (student.photo) {
+        try {
+          if (student.photo.startsWith('data:image')) {
+            pdf.addImage(student.photo, 'JPEG', currentX + 2, currentY + 2, photoSize - 4, photoSize - 4);
           }
-        } else {
-          // Mostrar inicial se não tem foto
+        } catch (e) {
+          // Se falhar, mostrar inicial
           pdf.setFontSize(24);
           pdf.setFont('helvetica', 'bold');
           pdf.setTextColor(100, 100, 100);
           pdf.text(student.name.charAt(0).toUpperCase(), currentX + photoSize / 2, currentY + photoSize / 2 + 5, { align: 'center' });
           pdf.setTextColor(0, 0, 0);
         }
-
-        // Nome do aluno
-        pdf.setFontSize(8);
-        pdf.setFont('helvetica', 'normal');
-        const truncatedName = student.name.length > 18 ? student.name.substring(0, 16) + '...' : student.name;
-        pdf.text(truncatedName, currentX + photoSize / 2, currentY + photoSize + 6, { align: 'center', maxWidth: photoSize });
-
-        // Próxima posição
-        col++;
-        if (col >= cols) {
-          col = 0;
-          currentX = margin;
-          currentY += itemHeight;
-        } else {
-          currentX += photoSize + photoGap;
-        }
+      } else {
+        // Mostrar inicial se não tem foto
+        pdf.setFontSize(24);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(student.name.charAt(0).toUpperCase(), currentX + photoSize / 2, currentY + photoSize / 2 + 5, { align: 'center' });
+        pdf.setTextColor(0, 0, 0);
       }
 
-      // Salvar PDF com nome da turma
+      // Nome do aluno
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      const truncatedName = student.name.length > 18 ? student.name.substring(0, 16) + '...' : student.name;
+      pdf.text(truncatedName, currentX + photoSize / 2, currentY + photoSize + 6, { align: 'center', maxWidth: photoSize });
+
+      // Próxima posição
+      col++;
+      if (col >= cols) {
+        col = 0;
+        currentX = margin;
+        currentY += itemHeight;
+      } else {
+        currentX += photoSize + photoGap;
+      }
+    }
+
+    return pdf;
+  };
+
+  // Função para salvar PDF com diálogo (Electron) ou download direto (Web)
+  const savePDF = async (pdf, defaultFileName) => {
+    if (isElectron() && window.electronAPI?.showSaveDialog) {
+      try {
+        // Mostrar diálogo de "Salvar Como"
+        const result = await window.electronAPI.showSaveDialog({
+          title: 'Salvar PDF da Turma',
+          defaultPath: defaultFileName,
+          filters: [
+            { name: 'Arquivos PDF', extensions: ['pdf'] }
+          ]
+        });
+
+        if (result.canceled || !result.filePath) {
+          return { success: false, canceled: true };
+        }
+
+        // Gerar o PDF como ArrayBuffer
+        const pdfOutput = pdf.output('arraybuffer');
+        
+        // Salvar usando o Electron
+        const saveResult = await window.electronAPI.saveFile(result.filePath, pdfOutput);
+        
+        if (saveResult.success) {
+          return { success: true, path: saveResult.path };
+        } else {
+          throw new Error(saveResult.error);
+        }
+      } catch (error) {
+        console.error('Erro ao salvar PDF:', error);
+        // Fallback para download padrão
+        pdf.save(defaultFileName);
+        return { success: true, fallback: true };
+      }
+    } else {
+      // Modo web: download direto
+      pdf.save(defaultFileName);
+      return { success: true };
+    }
+  };
+
+  // Função para exportar PDF de uma turma
+  const exportTurmaToPDF = async (turmaId, turmaData) => {
+    setExportingTurma(turmaId);
+    setExporting(true);
+
+    try {
+      const pdf = generatePDF(turmaData);
       const fileName = `${turmaData.name.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.pdf`;
-      pdf.save(fileName);
       
-      toast.success(`PDF "${fileName}" gerado com sucesso!`);
+      const result = await savePDF(pdf, fileName);
+      
+      if (result.canceled) {
+        toast.info('Exportação cancelada');
+      } else if (result.success) {
+        if (result.path) {
+          toast.success(`PDF salvo em: ${result.path}`);
+        } else {
+          toast.success(`PDF "${fileName}" gerado com sucesso!`);
+        }
+      }
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF');
@@ -181,13 +229,32 @@ const PhotoGridPage = () => {
     setExporting(true);
     
     try {
+      let savedCount = 0;
+      
       for (const [turmaId, turmaData] of Object.entries(groupedByTurma)) {
         setExportingTurma(turmaId);
-        await exportTurmaToPDF(turmaId, turmaData);
+        
+        const pdf = generatePDF(turmaData);
+        const fileName = `${turmaData.name.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}.pdf`;
+        
+        const result = await savePDF(pdf, fileName);
+        
+        if (result.canceled) {
+          toast.info('Exportação cancelada');
+          break;
+        }
+        
+        if (result.success) {
+          savedCount++;
+        }
+        
         // Pequena pausa entre downloads
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
-      toast.success('Todos os PDFs foram gerados!');
+      
+      if (savedCount > 0) {
+        toast.success(`${savedCount} PDF(s) gerado(s) com sucesso!`);
+      }
     } catch (error) {
       toast.error('Erro ao gerar PDFs');
     } finally {
@@ -286,7 +353,7 @@ const PhotoGridPage = () => {
                   </>
                 ) : (
                   <>
-                    <Download className="h-4 w-4" />
+                    <FolderOpen className="h-4 w-4" />
                     Exportar PDF
                   </>
                 )}
