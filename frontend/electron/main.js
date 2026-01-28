@@ -1,6 +1,6 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const http = require('http');
 const fs = require('fs');
 
@@ -12,6 +12,7 @@ let isDev = process.env.ELECTRON_DEV === 'true';
 // Portas
 const BACKEND_PORT = 8001;
 const FRONTEND_PORT = 3000;
+const MONGO_PORT = 27017;
 
 // Caminho base para recursos
 function getResourcePath() {
@@ -19,6 +20,33 @@ function getResourcePath() {
     return path.join(__dirname, '..');
   }
   return path.join(process.resourcesPath);
+}
+
+// Verificar se MongoDB está rodando
+function checkMongoDBConnection() {
+  return new Promise((resolve) => {
+    const net = require('net');
+    const client = new net.Socket();
+    
+    client.setTimeout(2000);
+    
+    client.on('connect', () => {
+      client.destroy();
+      resolve(true);
+    });
+    
+    client.on('error', () => {
+      client.destroy();
+      resolve(false);
+    });
+    
+    client.on('timeout', () => {
+      client.destroy();
+      resolve(false);
+    });
+    
+    client.connect(MONGO_PORT, 'localhost');
+  });
 }
 
 // Verificar se o backend está rodando
@@ -67,20 +95,16 @@ async function waitForBackend(maxAttempts = 30, interval = 1000) {
 function startBackend() {
   return new Promise((resolve, reject) => {
     if (isDev) {
-      // Em desenvolvimento, assume que o backend já está rodando
       console.log('🔧 Modo dev: backend deve estar rodando separadamente');
       resolve(true);
       return;
     }
 
     const backendPath = path.join(getResourcePath(), 'backend');
-    const pythonPath = process.platform === 'win32' 
-      ? path.join(backendPath, 'python', 'python.exe')
-      : 'python3';
-
+    
     console.log(`🚀 Iniciando backend em: ${backendPath}`);
 
-    // Definir variáveis de ambiente para o backend
+    // Variáveis de ambiente para o backend
     const env = {
       ...process.env,
       MONGO_URL: process.env.MONGO_URL || 'mongodb://localhost:27017',
@@ -89,11 +113,8 @@ function startBackend() {
       CORS_ORIGINS: '*'
     };
 
-    // Verificar se temos Python empacotado ou usar do sistema
-    let pythonExecutable = 'python3';
-    if (process.platform === 'win32') {
-      pythonExecutable = 'python';
-    }
+    // Usar Python do sistema
+    let pythonExecutable = process.platform === 'win32' ? 'python' : 'python3';
 
     backendProcess = spawn(pythonExecutable, [
       '-m', 'uvicorn',
@@ -124,7 +145,6 @@ function startBackend() {
       backendProcess = null;
     });
 
-    // Aguardar backend iniciar
     setTimeout(() => resolve(true), 2000);
   });
 }
@@ -136,6 +156,36 @@ function stopBackend() {
     backendProcess.kill('SIGTERM');
     backendProcess = null;
   }
+}
+
+// Mostrar diálogo de erro de MongoDB
+async function showMongoDBErrorDialog() {
+  const result = await dialog.showMessageBox({
+    type: 'warning',
+    title: 'MongoDB não encontrado',
+    message: 'O MongoDB não está instalado ou não está rodando.',
+    detail: 'O SGE Desktop precisa do MongoDB para funcionar.\n\nDeseja abrir a página de download do MongoDB?',
+    buttons: ['Baixar MongoDB', 'Tentar Novamente', 'Sair'],
+    defaultId: 0,
+    cancelId: 2
+  });
+
+  if (result.response === 0) {
+    // Abrir página de download
+    shell.openExternal('https://www.mongodb.com/try/download/community');
+    // Mostrar instruções
+    await dialog.showMessageBox({
+      type: 'info',
+      title: 'Instalação do MongoDB',
+      message: 'Instruções de Instalação',
+      detail: '1. Baixe o MongoDB Community Server\n2. Execute o instalador\n3. Marque "Install MongoDB as a Service"\n4. Conclua a instalação\n5. Reinicie o SGE Desktop',
+      buttons: ['OK']
+    });
+    return 'download';
+  } else if (result.response === 1) {
+    return 'retry';
+  }
+  return 'exit';
 }
 
 // Criar janela principal
@@ -157,7 +207,6 @@ function createWindow() {
     autoHideMenuBar: false
   });
 
-  // URL a carregar
   const startUrl = isDev
     ? `http://localhost:${FRONTEND_PORT}`
     : `file://${path.join(__dirname, '..', 'build', 'index.html')}`;
@@ -165,13 +214,11 @@ function createWindow() {
   console.log(`📱 Carregando: ${startUrl}`);
   mainWindow.loadURL(startUrl);
 
-  // Mostrar quando pronto
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     mainWindow.focus();
   });
 
-  // DevTools em desenvolvimento
   if (isDev) {
     mainWindow.webContents.openDevTools();
   }
@@ -205,10 +252,33 @@ app.whenReady().then(async () => {
   console.log('🎓 SGE Desktop iniciando...');
   console.log(`📂 Modo: ${isDev ? 'Desenvolvimento' : 'Produção'}`);
 
-  // Criar splash screen
   const splash = createSplashWindow();
 
   try {
+    // Verificar MongoDB
+    let mongoOK = await checkMongoDBConnection();
+    
+    while (!mongoOK) {
+      const action = await showMongoDBErrorDialog();
+      
+      if (action === 'exit') {
+        splash.close();
+        app.quit();
+        return;
+      }
+      
+      if (action === 'download') {
+        splash.close();
+        app.quit();
+        return;
+      }
+      
+      // Tentar novamente
+      mongoOK = await checkMongoDBConnection();
+    }
+
+    console.log('✅ MongoDB conectado!');
+
     // Iniciar backend
     await startBackend();
 
@@ -216,10 +286,13 @@ app.whenReady().then(async () => {
     const backendReady = await waitForBackend();
     
     if (!backendReady && !isDev) {
-      dialog.showErrorBox(
-        'Erro ao Iniciar',
-        'Não foi possível conectar ao servidor local. Verifique se o MongoDB está instalado e rodando.'
-      );
+      await dialog.showMessageBox({
+        type: 'error',
+        title: 'Erro ao Iniciar',
+        message: 'Não foi possível iniciar o servidor local.',
+        detail: 'Verifique se o Python está instalado e se todas as dependências foram instaladas corretamente.',
+        buttons: ['OK']
+      });
     }
 
     // Criar janela principal
@@ -269,4 +342,8 @@ ipcMain.handle('get-app-info', () => {
 
 ipcMain.handle('check-backend-status', async () => {
   return await checkBackendHealth();
+});
+
+ipcMain.handle('check-mongodb-status', async () => {
+  return await checkMongoDBConnection();
 });
