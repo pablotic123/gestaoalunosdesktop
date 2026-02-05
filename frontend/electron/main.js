@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
-const { spawn, execSync } = require('child_process');
+const { spawn } = require('child_process');
 const http = require('http');
 const fs = require('fs');
 
@@ -12,7 +12,6 @@ let isDev = process.env.ELECTRON_DEV === 'true';
 // Portas
 const BACKEND_PORT = 8001;
 const FRONTEND_PORT = 3000;
-const MONGO_PORT = 27017;
 
 // Caminho base para recursos
 function getResourcePath() {
@@ -20,33 +19,6 @@ function getResourcePath() {
     return path.join(__dirname, '..');
   }
   return path.join(process.resourcesPath);
-}
-
-// Verificar se MongoDB está rodando
-function checkMongoDBConnection() {
-  return new Promise((resolve) => {
-    const net = require('net');
-    const client = new net.Socket();
-    
-    client.setTimeout(2000);
-    
-    client.on('connect', () => {
-      client.destroy();
-      resolve(true);
-    });
-    
-    client.on('error', () => {
-      client.destroy();
-      resolve(false);
-    });
-    
-    client.on('timeout', () => {
-      client.destroy();
-      resolve(false);
-    });
-    
-    client.connect(MONGO_PORT, 'localhost');
-  });
 }
 
 // Verificar se o backend está rodando
@@ -57,7 +29,7 @@ function checkBackendHealth() {
       port: BACKEND_PORT,
       path: '/api/health',
       method: 'GET',
-      timeout: 2000
+      timeout: 3000
     };
 
     const req = http.request(options, (res) => {
@@ -75,7 +47,7 @@ function checkBackendHealth() {
 }
 
 // Aguardar o backend iniciar
-async function waitForBackend(maxAttempts = 30, interval = 1000) {
+async function waitForBackend(maxAttempts = 45, interval = 1000) {
   console.log('⏳ Aguardando backend iniciar...');
   
   for (let i = 0; i < maxAttempts; i++) {
@@ -84,6 +56,7 @@ async function waitForBackend(maxAttempts = 30, interval = 1000) {
       console.log('✅ Backend iniciado com sucesso!');
       return true;
     }
+    console.log(`   Tentativa ${i + 1}/${maxAttempts}...`);
     await new Promise(resolve => setTimeout(resolve, interval));
   }
   
@@ -124,7 +97,8 @@ function startBackend() {
     ], {
       cwd: backendPath,
       env: env,
-      stdio: ['ignore', 'pipe', 'pipe']
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: process.platform === 'win32'
     });
 
     backendProcess.stdout.on('data', (data) => {
@@ -132,7 +106,7 @@ function startBackend() {
     });
 
     backendProcess.stderr.on('data', (data) => {
-      console.error(`[Backend Error] ${data}`);
+      console.error(`[Backend] ${data}`);
     });
 
     backendProcess.on('error', (err) => {
@@ -153,39 +127,13 @@ function startBackend() {
 function stopBackend() {
   if (backendProcess) {
     console.log('🛑 Encerrando backend...');
-    backendProcess.kill('SIGTERM');
+    if (process.platform === 'win32') {
+      spawn('taskkill', ['/pid', backendProcess.pid, '/f', '/t']);
+    } else {
+      backendProcess.kill('SIGTERM');
+    }
     backendProcess = null;
   }
-}
-
-// Mostrar diálogo de erro de MongoDB
-async function showMongoDBErrorDialog() {
-  const result = await dialog.showMessageBox({
-    type: 'warning',
-    title: 'MongoDB não encontrado',
-    message: 'O MongoDB não está instalado ou não está rodando.',
-    detail: 'O SGE Desktop precisa do MongoDB para funcionar.\n\nDeseja abrir a página de download do MongoDB?',
-    buttons: ['Baixar MongoDB', 'Tentar Novamente', 'Sair'],
-    defaultId: 0,
-    cancelId: 2
-  });
-
-  if (result.response === 0) {
-    // Abrir página de download
-    shell.openExternal('https://www.mongodb.com/try/download/community');
-    // Mostrar instruções
-    await dialog.showMessageBox({
-      type: 'info',
-      title: 'Instalação do MongoDB',
-      message: 'Instruções de Instalação',
-      detail: '1. Baixe o MongoDB Community Server\n2. Execute o instalador\n3. Marque "Install MongoDB as a Service"\n4. Conclua a instalação\n5. Reinicie o SGE Desktop',
-      buttons: ['OK']
-    });
-    return 'download';
-  } else if (result.response === 1) {
-    return 'retry';
-  }
-  return 'exit';
 }
 
 // Criar janela principal
@@ -247,6 +195,49 @@ function createSplashWindow() {
   return splash;
 }
 
+// Mostrar erro de conexão
+async function showConnectionErrorDialog(errorType) {
+  const messages = {
+    backend: {
+      title: 'Erro ao Iniciar Servidor',
+      message: 'Não foi possível iniciar o servidor local.',
+      detail: 'Possíveis causas:\n\n' +
+        '1. Python não está instalado ou não está no PATH\n' +
+        '2. Dependências Python não foram instaladas\n' +
+        '3. MongoDB não está rodando\n\n' +
+        'Verifique se:\n' +
+        '• Python 3.11+ está instalado\n' +
+        '• MongoDB está instalado e rodando\n' +
+        '• As dependências foram instaladas (pip install -r requirements.txt)'
+    },
+    mongodb: {
+      title: 'MongoDB não encontrado',
+      message: 'O MongoDB não está instalado ou não está rodando.',
+      detail: 'O SGE precisa do MongoDB para funcionar.\n\n' +
+        'Baixe e instale o MongoDB Community Server:\n' +
+        'https://www.mongodb.com/try/download/community'
+    }
+  };
+
+  const msg = messages[errorType] || messages.backend;
+
+  const result = await dialog.showMessageBox({
+    type: 'error',
+    title: msg.title,
+    message: msg.message,
+    detail: msg.detail,
+    buttons: ['Tentar Novamente', 'Abrir Documentação', 'Sair'],
+    defaultId: 0,
+    cancelId: 2
+  });
+
+  if (result.response === 1) {
+    shell.openExternal('https://www.mongodb.com/try/download/community');
+  }
+
+  return result.response === 0 ? 'retry' : 'exit';
+}
+
 // Inicialização do app
 app.whenReady().then(async () => {
   console.log('🎓 SGE Desktop iniciando...');
@@ -255,11 +246,15 @@ app.whenReady().then(async () => {
   const splash = createSplashWindow();
 
   try {
-    // Verificar MongoDB
-    let mongoOK = await checkMongoDBConnection();
+    // Iniciar backend
+    await startBackend();
+
+    // Aguardar backend estar pronto
+    let backendReady = await waitForBackend();
     
-    while (!mongoOK) {
-      const action = await showMongoDBErrorDialog();
+    // Se não conectou, mostrar erro e permitir tentar novamente
+    while (!backendReady && !isDev) {
+      const action = await showConnectionErrorDialog('backend');
       
       if (action === 'exit') {
         splash.close();
@@ -267,32 +262,9 @@ app.whenReady().then(async () => {
         return;
       }
       
-      if (action === 'download') {
-        splash.close();
-        app.quit();
-        return;
-      }
-      
-      // Tentar novamente
-      mongoOK = await checkMongoDBConnection();
-    }
-
-    console.log('✅ MongoDB conectado!');
-
-    // Iniciar backend
-    await startBackend();
-
-    // Aguardar backend estar pronto
-    const backendReady = await waitForBackend();
-    
-    if (!backendReady && !isDev) {
-      await dialog.showMessageBox({
-        type: 'error',
-        title: 'Erro ao Iniciar',
-        message: 'Não foi possível iniciar o servidor local.',
-        detail: 'Verifique se o Python está instalado e se todas as dependências foram instaladas corretamente.',
-        buttons: ['OK']
-      });
+      // Tentar iniciar novamente
+      await startBackend();
+      backendReady = await waitForBackend();
     }
 
     // Criar janela principal
@@ -301,7 +273,7 @@ app.whenReady().then(async () => {
     // Fechar splash
     setTimeout(() => {
       splash.close();
-    }, 1500);
+    }, 1000);
 
   } catch (error) {
     console.error('Erro na inicialização:', error);
@@ -344,10 +316,6 @@ ipcMain.handle('check-backend-status', async () => {
   return await checkBackendHealth();
 });
 
-ipcMain.handle('check-mongodb-status', async () => {
-  return await checkMongoDBConnection();
-});
-
 // Diálogo para salvar arquivo
 ipcMain.handle('show-save-dialog', async (event, options) => {
   const result = await dialog.showSaveDialog(mainWindow, {
@@ -365,7 +333,6 @@ ipcMain.handle('show-save-dialog', async (event, options) => {
 // Salvar arquivo em caminho específico
 ipcMain.handle('save-file', async (event, filePath, data) => {
   try {
-    // Converter base64 para buffer se necessário
     let buffer;
     if (typeof data === 'string' && data.includes('base64')) {
       const base64Data = data.split(',')[1] || data;
