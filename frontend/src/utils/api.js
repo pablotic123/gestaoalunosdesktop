@@ -13,13 +13,25 @@ const isElectron = () => {
   return false;
 };
 
+// Verificar se está em modo desenvolvimento do Electron
+const isElectronDev = () => {
+  if (typeof window !== 'undefined' && window.electronAPI?.isDev) {
+    return true;
+  }
+  // Verificar se está rodando em localhost:3000 (dev server)
+  if (typeof window !== 'undefined' && window.location.port === '3000') {
+    return true;
+  }
+  return false;
+};
+
 // Definir URL base baseado no ambiente
 const getApiUrl = () => {
-  if (isElectron()) {
-    // No Electron, usar localhost
+  // No Electron em modo produção, usar localhost (backend embutido)
+  if (isElectron() && !isElectronDev()) {
     return 'http://localhost:8001/api';
   }
-  // Na web, usar a URL de produção ou variável de ambiente
+  // Na web ou Electron dev, usar a URL de produção ou variável de ambiente
   return process.env.REACT_APP_BACKEND_URL 
     ? `${process.env.REACT_APP_BACKEND_URL}/api`
     : 'https://easy-desktop-app.preview.emergentagent.com/api';
