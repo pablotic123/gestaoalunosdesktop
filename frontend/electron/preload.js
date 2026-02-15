@@ -1,5 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Verificar se está em modo desenvolvimento
+const isDev = process.env.ELECTRON_DEV === 'true';
+
 // Expor APIs seguras para o renderer
 contextBridge.exposeInMainWorld('electronAPI', {
   // Informações do app
@@ -20,6 +23,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Verificar se está rodando no Electron
   isElectron: true,
   
+  // Verificar se está em modo desenvolvimento
+  isDev: isDev,
+  
   // Plataforma
   platform: process.platform,
   
@@ -32,3 +38,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
 });
 
 console.log('✅ Preload script carregado');
+console.log(`📂 Modo: ${isDev ? 'Desenvolvimento' : 'Produção'}`);
