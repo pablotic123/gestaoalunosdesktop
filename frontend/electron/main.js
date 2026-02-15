@@ -246,25 +246,32 @@ app.whenReady().then(async () => {
   const splash = createSplashWindow();
 
   try {
-    // Iniciar backend
-    await startBackend();
-
-    // Aguardar backend estar pronto
-    let backendReady = await waitForBackend();
-    
-    // Se não conectou, mostrar erro e permitir tentar novamente
-    while (!backendReady && !isDev) {
-      const action = await showConnectionErrorDialog('backend');
-      
-      if (action === 'exit') {
-        splash.close();
-        app.quit();
-        return;
-      }
-      
-      // Tentar iniciar novamente
+    if (isDev) {
+      // Modo desenvolvimento: pular verificação do backend
+      // O frontend vai usar a API configurada (pode ser remota ou local)
+      console.log('🔧 Modo dev: pulando verificação do backend local');
+      console.log('📡 O frontend usará a API configurada em api.js');
+    } else {
+      // Modo produção: iniciar e aguardar backend
       await startBackend();
-      backendReady = await waitForBackend();
+
+      // Aguardar backend estar pronto
+      let backendReady = await waitForBackend();
+      
+      // Se não conectou, mostrar erro e permitir tentar novamente
+      while (!backendReady) {
+        const action = await showConnectionErrorDialog('backend');
+        
+        if (action === 'exit') {
+          splash.close();
+          app.quit();
+          return;
+        }
+        
+        // Tentar iniciar novamente
+        await startBackend();
+        backendReady = await waitForBackend();
+      }
     }
 
     // Criar janela principal
